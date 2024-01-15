@@ -43,7 +43,12 @@ export async function inspectBlockBuys(block: Block, token: bigint) {
   const txInfos = await parseTransactionCalldata(block.transactions);
   for (const tx of txInfos) {
     const txsBuy = await filterBuyCoin(tx, token);
+    if (!txsBuy) continue;
+    
     for (const tx of txsBuy) {
+      if (tx.amountOut < BigInt(process.env.MIN_OUT_TOKENS_TRESHOLD as string))
+        continue;
+
       logger.info("Swapped: %o", {
         amountIn: toEther(tx.amountIn),
         amountOut: toEther(tx.amountOut),
@@ -200,6 +205,6 @@ async function main() {
   await inspectBlockBuys(latestBlock, BigInt(TOKEN_ADDRESS));
 }
 
-cron.schedule("*/10 * * * * *", main);
+cron.schedule("*/1 * * * * *", main);
 logger.info("Telegram bot started");
 main();
